@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Batxie - Misterio Femboy Mejorado</title>
+<title>Batxie - Juego de Cifrados Femboy Avanzado</title>
 <style>
   body {
     background-color: black;
     color: #7fff00;
     font-family: monospace, monospace;
     padding: 20px;
-    transition: background-color 0.3s ease;
   }
   h1 {
     text-shadow: 0 0 8px #7fff00;
@@ -20,13 +19,6 @@
     border: 1px solid #7fff00;
     padding: 12px;
     margin: 12px 0;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  .cipher.visible {
-    opacity: 1;
-    transform: translateY(0);
   }
   input {
     background: black;
@@ -79,79 +71,77 @@
 </style>
 </head>
 <body>
-  <h1 id="title"></h1>
-  <p>Resuelve las pistas antes que el tiempo se agote...</p>
-  <p id="timer">Tiempo restante: 180s</p>
+  <h1>🦇 Batxie - Juego de Cifrados Femboy Avanzado</h1>
+  <p>Descifra las pistas y pon la respuesta correcta...</p>
+  <p id="timer">Tiempo restante: 300s</p>
 
-  <div id="pistas-container">
-    <!-- Pistas se generarán aquí -->
+  <div class="cipher">
+    <p><strong>1. Cifrado César (+5):</strong> "Ynts fqqj fxywnjy"</p>
+    <input id="ans1" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(1)">Comprobar</button>
+    <p id="res1"></p>
+  </div>
+
+  <div class="cipher">
+    <p><strong>2. Binario:</strong> "01000011 01110101 01100001 01101110 01100100 01101111 00100000 01110110 01100101 01101110 01100111 01100001 01110011 00100000 01101110 01101111 00100000 01100101 01110011 01110100 01100001 01110010 01100001"</p>
+    <input id="ans2" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(2)">Comprobar</button>
+    <p id="res2"></p>
+  </div>
+
+  <div class="cipher">
+    <p><strong>3. Base64:</strong> "UmV2aXNhIGVuY2ltYSBkZSBtaSBhcm1hcmlv"</p>
+    <input id="ans3" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(3)">Comprobar</button>
+    <p id="res3"></p>
+  </div>
+
+  <div class="cipher">
+    <p><strong>4. Vigenère (clave: femboy):</strong> "Hzhnczmkt otggu hqtcd"</p>
+    <input id="ans4" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(4)">Comprobar</button>
+    <p id="res4"></p>
+  </div>
+
+  <div class="cipher">
+    <p><strong>5. Morse:</strong> "- . / .- -.-. ..- . .-. -.. .- ... / -.. --- -. -.. . / . ... - .- / -- .. / .--- . ..-. ."</p>
+    <input id="ans5" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(5)">Comprobar</button>
+    <p id="res5"></p>
+  </div>
+
+  <div class="cipher">
+    <p><strong>6. Hexadecimal:</strong> "526563uerda20736f7920656c206163657274696a6f206573746173206365726361"</p>
+    <input id="ans6" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(6)">Comprobar</button>
+    <p id="res6"></p>
+  </div>
+
+  <div class="cipher">
+    <p><strong>7. Clave Bill (Gravity Falls):</strong> "Zh wl ovcwlt sz wbnjvp rzfm xntwjr bmnwvn ulws (wyt sx zjq dw rnkjw)"</p>
+    <input id="ans7" placeholder="Tu respuesta" autocomplete="off" />
+    <button onclick="checkAnswer(7)">Comprobar</button>
+    <p id="res7"></p>
   </div>
 
   <script>
-    const pistasTexto = [
-      "Tengo algo secreto",
-      "Cuando vengas no estará lejos de ti",
-      "Revisa arriba de mi armario",
-      "Encontrarás algo nunca visto",
-      "La sombra siempre te observa",
-      "Busca donde el sol no llega",
-      "El secreto final está en tu reflejo"
-    ];
+    const respuestas = {
+      1: "tengo algo secreto",
+      2: "cuando vengas no estara",
+      3: "revisa encima de mi armario",
+      4: "encontraras algo inedito",
+      5: "te acuerdas donde esta mi jefe",
+      6: "recuerda soy el acertijo estas cerca",
+      7: "si lo logras te dejare ponerme cualquier reto que no sea con dinero"
+    };
 
-    const respuestas = [
-      "secreto",
-      "cerca",
-      "arriba",
-      "inédito",
-      "sombra",
-      "oscuro",
-      "reflejo"
-    ];
+    let correct = Array(7).fill(false);
+    let fallos = 0;
+    let tiempo = 300; // 5 minutos
 
-    const pistasContainer = document.getElementById("pistas-container");
-
-    // Crear las pistas en el DOM con animación
-    pistasTexto.forEach((texto, i) => {
-      const div = document.createElement("div");
-      div.classList.add("cipher");
-      div.innerHTML = `
-        <p><strong>${i + 1}.</strong> <span class="typing-text" id="tip${i}"></span></p>
-        <input id="ans${i + 1}" placeholder="Tu respuesta" autocomplete="off" />
-        <button onclick="checkAnswer(${i + 1})">Comprobar</button>
-        <p id="res${i + 1}"></p>
-      `;
-      pistasContainer.appendChild(div);
-    });
-
-    // Efecto tecleo para cada pista
-    function typeText(element, text, delay = 50) {
-      let index = 0;
-      element.textContent = "";
-      const timer = setInterval(() => {
-        element.textContent += text.charAt(index);
-        index++;
-        if (index === text.length) clearInterval(timer);
-      }, delay);
-    }
-
-    // Animar la aparición y tecleo de las pistas secuencialmente
-    function animarPistas(i = 0) {
-      if (i >= pistasTexto.length) return;
-      const pistaDiv = pistasContainer.children[i];
-      pistaDiv.classList.add("visible");
-      const typingSpan = document.getElementById(`tip${i}`);
-      typeText(typingSpan, pistasTexto[i]);
-      setTimeout(() => animarPistas(i + 1), pistasTexto[i].length * 50 + 700);
-    }
-
-    animarPistas();
-
-    // Temporizador
-    let tiempo = 180; // segundos
     const timerEl = document.getElementById("timer");
     const body = document.body;
-    let correct = Array(pistasTexto.length).fill(false);
-    let fallos = 0;
+
     const sonidoAcierto = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
     const sonidoError = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
@@ -165,11 +155,11 @@
     }, 1000);
 
     function checkAnswer(num) {
-      const input = document.getElementById(`ans${num}`);
-      const res = document.getElementById(`res${num}`);
+      const input = document.getElementById("ans" + num);
+      const res = document.getElementById("res" + num);
       const valor = input.value.trim().toLowerCase();
 
-      if (valor === respuestas[num - 1]) {
+      if (valor === respuestas[num]) {
         if (!correct[num - 1]) {
           res.textContent = "✅ Correcto";
           res.className = "correct";
@@ -183,7 +173,7 @@
         fallos++;
         sonidoError.play();
         flashRed();
-        if (fallos >= 5) {
+        if (fallos >= 7) {
           perder("💀 Has fallado demasiado, el misterio se ha perdido...");
         }
       }
@@ -213,3 +203,4 @@
   </script>
 </body>
 </html>
+
