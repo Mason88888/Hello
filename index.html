@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Batxie - Misterio Femboy Mejorado</title>
+<style>
+  body {
+    background-color: black;
+    color: #7fff00;
+    font-family: monospace, monospace;
+    padding: 20px;
+    transition: background-color 0.3s ease;
+  }
+  h1 {
+    text-shadow: 0 0 8px #7fff00;
+    font-size: 2rem;
+  }
+  .cipher {
+    border: 1px solid #7fff00;
+    padding: 12px;
+    margin: 12px 0;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .cipher.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  input {
+    background: black;
+    color: #7fff00;
+    border: 1px solid #7fff00;
+    padding: 8px;
+    width: 320px;
+    font-size: 1rem;
+  }
+  button {
+    background: #7fff00;
+    color: black;
+    border: none;
+    padding: 8px 16px;
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  #timer {
+    font-size: 1.2rem;
+    color: red;
+    margin-bottom: 16px;
+  }
+  .correct {
+    color: #00ff00;
+  }
+  .incorrect {
+    color: #ff4040;
+  }
+  .flash-red {
+    animation: flashred 0.3s ease;
+  }
+  @keyframes flashred {
+    0%, 100% { background-color: black; }
+    50% { background-color: darkred; }
+  }
+  #final-message {
+    color: #7fff00;
+    font-size: 2.5rem;
+    text-align: center;
+    margin-top: 40px;
+    text-shadow: 0 0 10px #7fff00, 0 0 20px #7fff00;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from { text-shadow: 0 0 10px #7fff00, 0 0 20px #7fff00; }
+    to { text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00; }
+  }
+</style>
+</head>
+<body>
+  <h1 id="title"></h1>
+  <p>Resuelve las pistas antes que el tiempo se agote...</p>
+  <p id="timer">Tiempo restante: 180s</p>
+
+  <div id="pistas-container">
+    <!-- Pistas se generarán aquí -->
+  </div>
+
+  <script>
+    const pistasTexto = [
+      "Tengo algo secreto",
+      "Cuando vengas no estará lejos de ti",
+      "Revisa arriba de mi armario",
+      "Encontrarás algo nunca visto",
+      "La sombra siempre te observa",
+      "Busca donde el sol no llega",
+      "El secreto final está en tu reflejo"
+    ];
+
+    const respuestas = [
+      "secreto",
+      "cerca",
+      "arriba",
+      "inédito",
+      "sombra",
+      "oscuro",
+      "reflejo"
+    ];
+
+    const pistasContainer = document.getElementById("pistas-container");
+
+    // Crear las pistas en el DOM con animación
+    pistasTexto.forEach((texto, i) => {
+      const div = document.createElement("div");
+      div.classList.add("cipher");
+      div.innerHTML = `
+        <p><strong>${i + 1}.</strong> <span class="typing-text" id="tip${i}"></span></p>
+        <input id="ans${i + 1}" placeholder="Tu respuesta" autocomplete="off" />
+        <button onclick="checkAnswer(${i + 1})">Comprobar</button>
+        <p id="res${i + 1}"></p>
+      `;
+      pistasContainer.appendChild(div);
+    });
+
+    // Efecto tecleo para cada pista
+    function typeText(element, text, delay = 50) {
+      let index = 0;
+      element.textContent = "";
+      const timer = setInterval(() => {
+        element.textContent += text.charAt(index);
+        index++;
+        if (index === text.length) clearInterval(timer);
+      }, delay);
+    }
+
+    // Animar la aparición y tecleo de las pistas secuencialmente
+    function animarPistas(i = 0) {
+      if (i >= pistasTexto.length) return;
+      const pistaDiv = pistasContainer.children[i];
+      pistaDiv.classList.add("visible");
+      const typingSpan = document.getElementById(`tip${i}`);
+      typeText(typingSpan, pistasTexto[i]);
+      setTimeout(() => animarPistas(i + 1), pistasTexto[i].length * 50 + 700);
+    }
+
+    animarPistas();
+
+    // Temporizador
+    let tiempo = 180; // segundos
+    const timerEl = document.getElementById("timer");
+    const body = document.body;
+    let correct = Array(pistasTexto.length).fill(false);
+    let fallos = 0;
+    const sonidoAcierto = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+    const sonidoError = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+
+    const countdown = setInterval(() => {
+      tiempo--;
+      timerEl.textContent = `Tiempo restante: ${tiempo}s`;
+      if (tiempo <= 0) {
+        clearInterval(countdown);
+        perder("⏳ Tiempo agotado, el misterio sigue sin resolverse...");
+      }
+    }, 1000);
+
+    function checkAnswer(num) {
+      const input = document.getElementById(`ans${num}`);
+      const res = document.getElementById(`res${num}`);
+      const valor = input.value.trim().toLowerCase();
+
+      if (valor === respuestas[num - 1]) {
+        if (!correct[num - 1]) {
+          res.textContent = "✅ Correcto";
+          res.className = "correct";
+          correct[num - 1] = true;
+          sonidoAcierto.play();
+          input.disabled = true;
+        }
+      } else {
+        res.textContent = "❌ Incorrecto";
+        res.className = "incorrect";
+        fallos++;
+        sonidoError.play();
+        flashRed();
+        if (fallos >= 5) {
+          perder("💀 Has fallado demasiado, el misterio se ha perdido...");
+        }
+      }
+
+      if (correct.every(Boolean)) {
+        clearInterval(countdown);
+        revelarFinal();
+      }
+    }
+
+    function flashRed() {
+      body.classList.add("flash-red");
+      setTimeout(() => body.classList.remove("flash-red"), 300);
+    }
+
+    function perder(mensaje) {
+      clearInterval(countdown);
+      alert(mensaje);
+      body.innerHTML = `<h1 style="color:red; text-align:center;">${mensaje}</h1>`;
+    }
+
+    function revelarFinal() {
+      body.innerHTML = `
+        <h1 id="final-message">Yo soy el primer acertijo femboy</h1>
+      `;
+    }
+  </script>
+</body>
+</html>
